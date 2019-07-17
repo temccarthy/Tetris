@@ -1,13 +1,13 @@
-import pygame
 import sys
+import pygame
 import numpy as np
 from Tetromino import Tet
 
 pygame.init()
-width, height = 600, 600
-screen = pygame.display.set_mode((width, height))
-black = 0, 0, 0
-white = 255, 255, 255
+WIDTH, HEIGHT = 600, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+BLACK = 0, 0, 0
+WHITE = 255, 255, 255
 
 gridRectSize = 30
 gridRect = pygame.Rect(0, 0, gridRectSize, gridRectSize)
@@ -77,26 +77,24 @@ while True:
         newY = movingTet.location[1]+piece[1]
         grid.itemset((newY, newX), movingTet.col+1)
 
-    
-
     if collided:
         #print('new tet created')
         movingTet = Tet()
         collided = False
 
-    delList=[]
+    delList = []
     for i in range(gridSize[0]):
-        #print(grid[i,:])
-        if 0 not in grid[i,:]:
+        # print(grid[i,:])
+        if 0 not in grid[i, :]:
             delList.append(i)
 
     for line in delList:
         for j in reversed(range(line)):
-            grid[j+1,:] = grid[j,:]
-        grid[0,:]=0
-        delList=[]
+            grid[j+1, :] = grid[j, :]
+        grid[0, :] = 0
+        delList = []
 
-    screen.fill(white)
+    screen.fill(WHITE)
     for i in range(gridSize[0]):
         for j in range(gridSize[1]):
             gridRect2 = gridRect.copy()
@@ -105,9 +103,9 @@ while True:
             gridRect3 = gridRect2.copy()
 
             pygame.draw.rect(
-                screen, colorList[grid[i][j]-1][1] if grid[i][j] > 0 else white, gridRect2, 0)
-            pygame.draw.rect(screen, black, gridRect3, 1)
-            screen.blit(font.render(str(i)+","+str(j), True, black),
+                screen, colorList[grid[i][j]-1][1] if grid[i][j] > 0 else WHITE, gridRect2, 0)
+            pygame.draw.rect(screen, BLACK, gridRect3, 1)
+            screen.blit(font.render(str(i)+","+str(j), True, BLACK),
                         (gridRect2.x+5, gridRect2.y+5))
 
     pygame.display.flip()

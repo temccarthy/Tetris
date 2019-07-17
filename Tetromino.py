@@ -56,7 +56,7 @@ class Tet:
             locM = np.asarray(piece)
 
             rotated = np.matmul(rotM, locM)
-            #print(rotated)
+            # print(rotated)
             newPieceList.append(rotated)
 
         collide = False
@@ -68,7 +68,7 @@ class Tet:
             #print("checking "+str(newX) + "," + str(newY) + " - grid is "+str(grid.item(newY, newX)))
 
         if not collide:
-            #print("rotated")
+            # print("rotated")
             self.pieces = newPieceList
         else:
             pass
