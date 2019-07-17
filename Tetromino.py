@@ -1,82 +1,75 @@
 from random import randrange
 import numpy as np
 
-shapeList = [
-    ((0, 0), (0, -1), (-1, -1), (1, 0)),   # RED S
-    ((0, 0), (-1, 0), (1, 0), (1, -1)),  # ORANGE L
-    ((0, 0), (0, -1), (1, 0), (1, -1)),  # YELLOW SQUARE
-    ((0, 0), (-1, 0), (0, -1), (1, -1)),  # GREEN S
-    ((0, 0), (-1, 0), (1, 0), (2, 0)),  # CYAN BAR
-    ((0, 0), (1, 0), (-1, 0), (-1, -1)),  # BLUE L
-    ((0, 0), (-1, 0), (0, -1), (1, 0))  # PURPLE T
-]
-
 
 class Tet:
 
-    location = [5, 1]  # x,y
-    rotationVal = 0  # use rotation matrix
+    location = [0, 0]  # x,y
     pieces = None
     col = 0
+    shapeList = [
+        ((0, 0), (0, -1), (-1, -1), (1, 0)),   # RED S
+        ((0, 0), (-1, 0), (1, 0), (1, -1)),  # ORANGE L
+        ((0, 0), (0, -1), (1, 0), (1, -1)),  # YELLOW SQUARE
+        ((0, 0), (-1, 0), (0, -1), (1, -1)),  # GREEN S
+        ((0, 0), (-1, 0), (1, 0), (2, 0)),  # CYAN BAR
+        ((0, 0), (1, 0), (-1, 0), (-1, -1)),  # BLUE L
+        ((0, 0), (-1, 0), (0, -1), (1, 0))  # PURPLE T
+    ]
 
     def __init__(self):
-        self.location = [5,1]
+        self.location = [5, 1]
         shapeVal = randrange(0, 7)
-        self.pieces = shapeList[shapeVal]
+        self.pieces = self.shapeList[shapeVal]
         self.col = shapeVal
 
     def move(self, h, v):
         self.location[0] += h
         self.location[1] += v
 
-    def tryMove(self, h, v, grid):
+    def checkIfPiecesCollide(self, location, pieceList, grid):
         collide = False
-        for piece in self.pieces:
-            newX = self.location[0]+piece[0]+h
-            newY = self.location[1]+piece[1]+v
+        canMove = True
 
-            inBoundsX = newX >= 0 and newX < grid.shape[1]
-            inBoundsY = newY >= 0 and newY < grid.shape[0]
-            if inBoundsX and inBoundsY:
-                collide = collide or grid.item(newY, newX) != 0
-            else:
-                collide = True
+        for piece in pieceList:
+            newX = location[0]+piece[0]
+            newY = location[1]+piece[1]
 
-        if not collide:
+            if not (newX >= 0 and newX < grid.shape[1]):
+                canMove = False
+            
+            if canMove:
+                if newY >= grid.shape[0]:
+                    collide = True
+                elif grid.item(newY, newX) != 0:
+                    collide = True
+
+        if collide:
+            canMove = False
+        return collide, canMove
+
+    def tryMove(self, h, v, grid):
+        newLocation = [x+y for x, y in zip(self.location, [h, v])]
+        collide, canMove = self.checkIfPiecesCollide(newLocation, self.pieces, grid)
+
+        if canMove:
+            #print("moving right "+str(h)+" down "+str(v))
             self.move(h, v)
         return collide
 
-    def rotate(self, dir, grid):  # only 1 or -1
-        assert dir == 1 or dir == -1
-
+    def rotate(self, grid):  # only 1 or -1
         newPieceList = []
         for piece in self.pieces:
-            rotM = np.array([[0, -dir],
-                             [dir, 0]])
+            rotM = np.array([[0, -1],
+                             [1, 0]])
             locM = np.asarray(piece)
 
             rotated = np.matmul(rotM, locM)
-            # print(rotated)
+
             newPieceList.append(rotated)
 
-        collide = False
-        for piece in newPieceList:
+        collide, canMove = self.checkIfPiecesCollide(
+            self.location, newPieceList, grid)
 
-            newX = self.location[0]+piece[0]
-            newY = self.location[1]+piece[1]
-            
-            inBoundsX = newX >= 0 and newX < grid.shape[1]
-            inBoundsY = newY >= 0 and newY < grid.shape[0]
-            if inBoundsX and inBoundsY:
-                collide = collide or grid.item(newY, newX) != 0
-            else:
-                collide = True
-            #print("checking "+str(newX) + "," + str(newY) + " - grid is "+str(grid.item(newY, newX)))
-
-        if not collide:
-            # print("rotated")
+        if canMove:
             self.pieces = newPieceList
-        else:
-            pass
-            #print("collided, no rotation")
-
