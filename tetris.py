@@ -30,14 +30,17 @@ font = pygame.font.SysFont('Arial', 10)
 
 pygame.time.set_timer(pygame.USEREVENT+1, 1000)
 collided = False
+spaceCollide = False
+delList = []
 
 while True:
 
     # reset grid
-    for piece in movingTet.pieces:
-        newX = movingTet.location[0]+piece[0]
-        newY = movingTet.location[1]+piece[1]
-        grid.itemset((newY, newX), 0)
+    if not collided: 
+        for piece in movingTet.pieces:
+            newX = movingTet.location[0]+piece[0]
+            newY = movingTet.location[1]+piece[1]
+            grid.itemset((newY, newX), 0)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -47,52 +50,33 @@ while True:
             collided = movingTet.tryMove(0, 1, grid)
 
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+
+                while not spaceCollide:
+                    spaceCollide = movingTet.tryMove(0, 1, grid)
+                spaceCollide = False
+                collided = True
+
             if event.key == pygame.K_UP:
-                # print("up")
                 movingTet.rotate(1, grid)
 
             if event.key == pygame.K_DOWN:
-                # print("down")
                 movingTet.tryMove(0, 1, grid)
                 if not collided:
                     pygame.time.set_timer(pygame.USEREVENT+1, 1000)
 
             if event.key == pygame.K_LEFT:
-                # print("left")
-                movingTet.tryMove(-1, 0, grid)
+                if not spaceCollide:
+                    movingTet.tryMove(-1, 0, grid)
 
             if event.key == pygame.K_RIGHT:
-                # print("right")
-                movingTet.tryMove(1, 0, grid)
-
-            if event.key == pygame.K_SPACE:
-                # print("space")
-                spaceCollide = False
-                while not spaceCollide:
-                    spaceCollide = movingTet.tryMove(0, 1, grid)
-                #pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+                if not spaceCollide:
+                    movingTet.tryMove(1, 0, grid)
 
     for piece in movingTet.pieces:
         newX = movingTet.location[0]+piece[0]
         newY = movingTet.location[1]+piece[1]
         grid.itemset((newY, newX), movingTet.col+1)
-
-    if collided:
-        #print('new tet created')
-        movingTet = Tet()
-        collided = False
-
-    delList = []
-    for i in range(gridSize[0]):
-        # print(grid[i,:])
-        if 0 not in grid[i, :]:
-            delList.append(i)
-
-    for line in delList:
-        for j in reversed(range(line)):
-            grid[j+1, :] = grid[j, :]
-        grid[0, :] = 0
-        delList = []
 
     screen.fill(WHITE)
     for i in range(gridSize[0]):
@@ -107,5 +91,21 @@ while True:
             pygame.draw.rect(screen, BLACK, gridRect3, 1)
             screen.blit(font.render(str(i)+","+str(j), True, BLACK),
                         (gridRect2.x+5, gridRect2.y+5))
+    if collided:
+        movingTet = Tet()
+        pygame.display.flip()
+        pygame.time.delay(1000)
+        for i in range(gridSize[0]):
+            if 0 not in grid[i, :]:
+                delList.append(i)
+
+        if len(delList) > 0:
+            for line in delList:
+                for j in reversed(range(line)):
+                    grid[j+1, :] = grid[j, :]
+                grid[0, :] = 0
+            delList = []
+        collided = False
+        pygame.time.set_timer(pygame.USEREVENT+1, 1000)
 
     pygame.display.flip()

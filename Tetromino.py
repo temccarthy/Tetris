@@ -20,7 +20,7 @@ class Tet:
     col = 0
 
     def __init__(self):
-        self.location = [5, 1]
+        self.location = [5,1]
         shapeVal = randrange(0, 7)
         self.pieces = shapeList[shapeVal]
         self.col = shapeVal
@@ -64,7 +64,13 @@ class Tet:
 
             newX = self.location[0]+piece[0]
             newY = self.location[1]+piece[1]
-            collide = collide or grid.item(newY, newX) != 0
+            
+            inBoundsX = newX >= 0 and newX < grid.shape[1]
+            inBoundsY = newY >= 0 and newY < grid.shape[0]
+            if inBoundsX and inBoundsY:
+                collide = collide or grid.item(newY, newX) != 0
+            else:
+                collide = True
             #print("checking "+str(newX) + "," + str(newY) + " - grid is "+str(grid.item(newY, newX)))
 
         if not collide:
@@ -73,3 +79,4 @@ class Tet:
         else:
             pass
             #print("collided, no rotation")
+
