@@ -4,7 +4,7 @@ import numpy as np
 
 class Tet:
 
-    location = [0, 0]  # x,y
+    location = [4, 1]  # x,y
     pieces = None
     col = 0
     shapeList = [
@@ -73,3 +73,8 @@ class Tet:
 
         if canMove:
             self.pieces = newPieceList
+    
+    def set(self, Tet):
+        self.pieces = Tet.pieces
+        self.col = Tet.col
+        self.location = [4,1]
