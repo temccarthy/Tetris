@@ -18,7 +18,7 @@ class Tet:
     ]
 
     def __init__(self):
-        self.location = [5, 1]
+        self.location = [4, 1]
         shapeVal = randrange(0, 7)
         self.pieces = self.shapeList[shapeVal]
         self.col = shapeVal

@@ -1,3 +1,13 @@
+"""
+TODO
+- refactor to OOP
+- add score/level/lines
+- add next tet
+- add save tet
+- add gameover
+
+"""
+
 import sys
 import pygame
 import numpy as np
@@ -11,7 +21,7 @@ WHITE = 255, 255, 255
 
 gridRectSize = 30
 gridRect = pygame.Rect(0, 0, gridRectSize, gridRectSize)
-gridSize = (20, 11)
+gridSize = (20, 10)
 
 grid = np.zeros(gridSize, dtype=int)
 
@@ -48,6 +58,7 @@ while True:
 
         if event.type == pygame.USEREVENT+1:
             collided = movingTet.tryMove(0, 1, grid)
+            print("forced down")
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
@@ -58,12 +69,13 @@ while True:
                 collided = True
 
             if event.key == pygame.K_UP:
-                movingTet.rotate(1, grid)
+                movingTet.rotate(grid)
+                #0movingTet.tryMove(0,-1,grid)
 
-            if event.key == pygame.K_DOWN:
-                movingTet.tryMove(0, 1, grid)
-                if not collided:
-                    pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+            # if event.key == pygame.K_DOWN:
+            #     movingTet.tryMove(0, 1, grid)
+            #     if not collided:
+            #         pygame.time.set_timer(pygame.USEREVENT+1, 1000)
 
             if event.key == pygame.K_LEFT:
                 if not spaceCollide:
@@ -72,6 +84,14 @@ while True:
             if event.key == pygame.K_RIGHT:
                 if not spaceCollide:
                     movingTet.tryMove(1, 0, grid)
+
+    pressed = pygame.key.get_pressed()   
+    if pygame.time.get_ticks()%50==0:
+        if pressed[pygame.K_DOWN]:
+            print("down")
+            collided = movingTet.tryMove(0, 1, grid)
+            if not collided:
+                pygame.time.set_timer(pygame.USEREVENT+1, 1000)
 
     for piece in movingTet.pieces:
         newX = movingTet.location[0]+piece[0]
@@ -89,8 +109,9 @@ while True:
             pygame.draw.rect(
                 screen, colorList[grid[i][j]-1][1] if grid[i][j] > 0 else WHITE, gridRect2, 0)
             pygame.draw.rect(screen, BLACK, gridRect3, 1)
-            screen.blit(font.render(str(i)+","+str(j), True, BLACK),
-                        (gridRect2.x+5, gridRect2.y+5))
+            #screen.blit(font.render(str(j)+","+str(i), True, BLACK),
+            #            (gridRect2.x+5, gridRect2.y+5))
+
     if collided:
         movingTet = Tet()
         pygame.display.flip()
