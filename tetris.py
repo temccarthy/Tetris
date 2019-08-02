@@ -1,11 +1,9 @@
 """
 TODO
-- refactor to OOP
-- add score/level/lines
-- add next tet
-- add save tet
+- fix rotating at edges ----
+- add next tet ----
 - add gameover
-
+- update screen less often (only on frames w/ movement) ----
 """
 
 import sys
@@ -13,131 +11,216 @@ import pygame
 import numpy as np
 from Tetromino import Tet
 
-pygame.init()
-WIDTH, HEIGHT = 600, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-BLACK = 0, 0, 0
-WHITE = 255, 255, 255
 
-gridRectSize = 30
-gridRect = pygame.Rect(0, 0, gridRectSize, gridRectSize)
-gridSize = (20, 10)
+class Game(object):
 
-grid = np.zeros(gridSize, dtype=int)
+    WIDTH, HEIGHT = 600, 600
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-colorList = [
-    ("red", (255, 0, 0)),
-    ("orange", (255, 102, 0)),
-    ("yellow", (255, 255, 0)),
-    ("green", (0, 255, 0)),
-    ("cyan", (0, 255, 255)),
-    ("blue", (0, 0, 255)),
-    ("purple", (204, 0, 255))
-]
+    BLACK = 0, 0, 0
+    WHITE = 255, 255, 255
 
-movingTet = Tet()
-nextTet = Tet()
-#savedTet = Tet()?
-font = pygame.font.SysFont('Arial', 20)
+    gridRectSize = 30
+    gridRect = pygame.Rect(0, 0, gridRectSize, gridRectSize)
+    gridSize = (20, 10)
+    grid = np.zeros(gridSize, dtype=int)
 
-pygame.time.set_timer(pygame.USEREVENT+1, 1000)
-collided = False
-spaceCollide = False
-delList = []
+    collided = False
+    spaceCollide = False
 
-while True:
+    level = 0
+    lines = 0
+    score = 0
 
-    # reset grid
-    if not collided: 
-        for piece in movingTet.pieces:
-            newX = movingTet.location[0]+piece[0]
-            newY = movingTet.location[1]+piece[1]
-            grid.itemset((newY, newX), 0)
+    levelTime = 1000
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
+    gameOver = False
 
-        if event.type == pygame.USEREVENT+1:
-            collided = movingTet.tryMove(0, 1, grid)
+    scoreList = [40, 100, 300, 1200]
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+    colorList = [
+        ("red", (255, 0, 0)),
+        ("orange", (255, 102, 0)),
+        ("yellow", (255, 255, 0)),
+        ("green", (0, 255, 0)),
+        ("cyan", (0, 255, 255)),
+        ("blue", (0, 0, 255)),
+        ("purple", (204, 0, 255))
+    ]
 
-                while not spaceCollide:
-                    spaceCollide = movingTet.tryMove(0, 1, grid)
-                spaceCollide = False
-                collided = True
+    font = None
 
-            if event.key == pygame.K_UP:
-                if movingTet.col!=2:
-                    movingTet.rotate(grid)
-                #0movingTet.tryMove(0,-1,grid)
+    pygame.time.set_timer(pygame.USEREVENT+1, levelTime)
 
-            # if event.key == pygame.K_DOWN:
-            #     movingTet.tryMove(0, 1, grid)
-            #     if not collided:
-            #         pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+    delLineList = []
 
-            if event.key == pygame.K_LEFT:
-                if not spaceCollide:
-                    movingTet.tryMove(-1, 0, grid)
+    movingTet = Tet()
+    nextTet = Tet()
+    # savedTet = Tet()?
 
-            if event.key == pygame.K_RIGHT:
-                if not spaceCollide:
-                    movingTet.tryMove(1, 0, grid)
+    def __init__(self):
+        pygame.init()
+        self.font = pygame.font.SysFont('Arial', 20)
 
-    pressed = pygame.key.get_pressed()   
-    if pygame.time.get_ticks()%50==0:
-        if pressed[pygame.K_DOWN]:
-            collided = movingTet.tryMove(0, 1, grid)
-            if not collided:
-                pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+    def main(self):
 
-    for piece in movingTet.pieces:
-        newX = movingTet.location[0]+piece[0]
-        newY = movingTet.location[1]+piece[1]
-        grid.itemset((newY, newX), movingTet.col+1)
+        while not self.gameOver:
 
-    screen.fill(WHITE)
-    for i in range(gridSize[0]):
-        for j in range(gridSize[1]):
-            gridRect2 = gridRect.copy()
-            gridRect2.x = j*gridRectSize
-            gridRect2.y = i*gridRectSize
-            gridRect3 = gridRect2.copy()
-            pygame.draw.rect(
-                screen, colorList[grid[i][j]-1][1] if grid[i][j] > 0 else WHITE, gridRect2, 0)
-            pygame.draw.rect(screen, BLACK, gridRect3, 1)
-            #screen.blit(font.render(str(j)+","+str(i), True, BLACK),
-            #            (gridRect2.x+5, gridRect2.y+5))
-    
-    screen.blit(font.render("NEXT", True, BLACK), (362,10))
-    for piece in nextTet.pieces:
-        gridRect4 = gridRect.copy()
-        gridRect4.x = 375 + piece[0]*gridRectSize
-        gridRect4.y = 75 + piece[1]*gridRectSize
-        gridRect5 = gridRect4.copy()
-        pygame.draw.rect(
-                screen, colorList[nextTet.col][1], gridRect4, 0)
-        pygame.draw.rect(screen, BLACK, gridRect5, 1)
+            # resets grid
+            if not self.collided:
+                for piece in self.movingTet.pieces:
+                    newX = self.movingTet.location[0]+piece[0]
+                    newY = self.movingTet.location[1]+piece[1]
+                    self.grid.itemset((newY, newX), 0)
 
-    if collided:
-        movingTet.set(nextTet)
-        nextTet = Tet()
+            # gets keyboard presses
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+
+                # if timer runs out try moving piece down
+                if event.type == pygame.USEREVENT+1:
+                    self.collided = self.movingTet.tryMove(0, 1, self.grid)
+
+                if event.type == pygame.KEYDOWN:
+
+                    # if space hard drop
+                    if event.key == pygame.K_SPACE:
+
+                        while not self.spaceCollide:
+                            self.spaceCollide = self.movingTet.tryMove(
+                                0, 1, self.grid)
+                        self.spaceCollide = False
+                        self.collided = True
+
+                    # if up rotate clockwise
+                    if event.key == pygame.K_UP:
+                        if self.movingTet.col != 2:
+                            self.movingTet.rotate(self.grid)
+                        # movingTet.tryMove(0,-1,grid)
+
+                    # if left move left
+                    if event.key == pygame.K_LEFT:
+                        if not self.spaceCollide:
+                            self.movingTet.tryMove(-1, 0, self.grid)
+
+                    # if right move right
+                    if event.key == pygame.K_RIGHT:
+                        if not self.spaceCollide:
+                            self.movingTet.tryMove(1, 0, self.grid)
+
+            # if down is held, soft drop
+            pressed = pygame.key.get_pressed()
+            if pygame.time.get_ticks() % 50 == 0:
+                if pressed[pygame.K_DOWN]:
+                    self.collided = self.movingTet.tryMove(0, 1, self.grid)
+                    if not self.collided:
+                        pygame.time.set_timer(pygame.USEREVENT+1, self.levelTime)
+
+            # update grid for coloring
+            for piece in self.movingTet.pieces:
+                newX = self.movingTet.location[0]+piece[0]
+                newY = self.movingTet.location[1]+piece[1]                   
+                self.grid.itemset((newY, newX), self.movingTet.col+1)
+
+            # update screen
+            self.updateScreen()
+
+            # if collided, replaces movingTet with nextTet, gen
+            if self.collided:
+                self.movingTet.set(self.nextTet)
+                self.nextTet = Tet()
+
+                # check for gameover
+                for piece in self.movingTet.pieces:
+                    newX = self.movingTet.location[0]+piece[0]
+                    newY = self.movingTet.location[1]+piece[1]
+                    
+                    if self.grid[newY][newX]!=0:
+                        self.gameOver = True
+                        print("gameover")
+                        break
+
+                pygame.display.flip()
+                pygame.time.delay(self.levelTime)
+
+                # checks for lines
+                for i in range(self.gridSize[0]):
+                    if 0 not in self.grid[i, :]:
+                        self.delLineList.append(i)
+
+                # deletes lines if there are any
+                if len(self.delLineList) > 0:
+                    for line in self.delLineList:
+                        for j in reversed(range(line)):
+                            self.grid[j+1, :] = self.grid[j, :]
+                        self.grid[0, :] = 0
+
+                    # updates statistics
+                    self.lines += len(self.delLineList)
+                    self.score += (self.level+1) * \
+                        self.scoreList[len(self.delLineList)-1]
+
+                    # speeds up game
+                    if self.lines != 0 and self.lines % 10 == 0:
+                        self.level += 1
+                        if self.level < 16:
+                            self.levelTime -= 50
+                        elif self.level >= 16 and self.level < 40:
+                            self.levelTime -= 10
+                        else:
+                            pass  # ?
+
+                    self.delLineList = []
+
+                self.collided = False
+                #pygame.time.set_timer(pygame.USEREVENT+1, self.levelTime)
+
+            pygame.display.flip()
+        
+        # at gameover screen
+        self.screen.blit(self.font.render("Game Over", True, (127,127,127)), (300,300))
         pygame.display.flip()
-        pygame.time.delay(1000)
-        for i in range(gridSize[0]):
-            if 0 not in grid[i, :]:
-                delList.append(i)
+        pygame.time.delay(10000)
 
-        if len(delList) > 0:
-            for line in delList:
-                for j in reversed(range(line)):
-                    grid[j+1, :] = grid[j, :]
-                grid[0, :] = 0
-            delList = []
-        collided = False
-        pygame.time.set_timer(pygame.USEREVENT+1, 1000)
+    def updateScreen(self):
+        self.screen.fill(self.WHITE)
 
-    pygame.display.flip()
+        # draws grid w/ colors
+        for i in range(self.gridSize[0]):
+            for j in range(self.gridSize[1]):
+                gridRect2 = self.gridRect.copy()
+                gridRect2.x = j*self.gridRectSize
+                gridRect2.y = i*self.gridRectSize
+                gridRect3 = gridRect2.copy()
+                pygame.draw.rect(
+                    self.screen, self.colorList[self.grid[i][j]-1][1] if self.grid[i][j] > 0 else self.WHITE, gridRect2, 0)
+                pygame.draw.rect(self.screen, self.BLACK, gridRect3, 1)
+                # screen.blit(font.render(str(j)+","+str(i), True, BLACK),
+                #            (gridRect2.x+5, gridRect2.y+5))
+
+        # draws NEXT and nextTet
+        self.screen.blit(self.font.render("NEXT", True, self.BLACK), (362, 10))
+        for piece in self.nextTet.pieces:
+            gridRect4 = self.gridRect.copy()
+            gridRect4.x = 375 + piece[0]*self.gridRectSize
+            gridRect4.y = 75 + piece[1]*self.gridRectSize
+            gridRect5 = gridRect4.copy()
+            pygame.draw.rect(
+                self.screen, self.colorList[self.nextTet.col][1], gridRect4, 0)
+            pygame.draw.rect(self.screen, self.BLACK, gridRect5, 1)
+        
+        # draws statistics
+        self.screen.blit(self.font.render(
+            "LEVEL: " + str(self.level), True, self.BLACK), (350, 400))
+        self.screen.blit(self.font.render(
+            "LINES: " + str(self.lines), True, self.BLACK), (350, 425))
+        self.screen.blit(self.font.render(
+            "SCORE: " + str(self.score), True, self.BLACK), (350, 450))
+
+
+if __name__ == "__main__":
+    buttons = [0,0,0,0,0] # UP, DOWN, LEFT, RIGHT, SPACE
+    
+    game = Game()
+    game.main()
